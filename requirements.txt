@@ -1,0 +1,11 @@
+certifi==2023.11.17
+charset-normalizer==3.3.2
+colorzero==2.0
+gpiozero==1.6.2
+idna==3.4
+pigpio==1.78
+Pillow==10.0.0
+python-dotenv==1.0.0
+requests==2.31.0
+rgbmatrix==0.0.1
+urllib3==2.1.0
