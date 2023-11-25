@@ -3,8 +3,6 @@ import threading
 from utils.logger import Logger as l
 import traceback
 
-StartTime = time.time()
-
 
 class setInterval:
     def __init__(self, interval, action):

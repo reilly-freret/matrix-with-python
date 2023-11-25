@@ -9,6 +9,11 @@ import colorsys
 from utils.timer import setInterval
 from utils.logger import Logger as l
 
+ALBUM_PLACEHOLDER = Image.new("RGB", (16, 16), (150, 150, 150))
+d = ImageDraw.Draw(ALBUM_PLACEHOLDER)
+d.ellipse([(2, 2), (13, 13)], fill=(0, 0, 0))
+d.ellipse([(6, 6), (9, 9)], fill=(150, 150, 150))
+
 
 def scale_lightness(rgb, scale_l):
     # convert rgb to hls
@@ -54,6 +59,7 @@ class SpotifyApp(App):
             headers=headers,
             data=form_data
         )
+        l.DEBUG(access_response.json())
         access_token = access_response.json()['access_token']
         l.INFO(f"got new access_token: {access_token}")
         return access_token
@@ -98,7 +104,7 @@ class SpotifyApp(App):
         self.__last_song_id__ = None
         self.__last_album_id__ = None
         self.__accent_color__ = None
-        self.__album_art__ = Image.new("RGB", (16, 16), (150, 150, 150))
+        self.__album_art__ = ALBUM_PLACEHOLDER
         self.__album_art_cache__ = {}
         self.__canvas__ = Image.new("RGB", (64, 32), (0, 0, 0))
         self.__title_scroller__ = Scroller(
@@ -129,8 +135,7 @@ class SpotifyApp(App):
                 self.__album_art__ = self.__album_art_cache__[new_album_id]
             else:
                 # clear previous art
-                self.__album_art__ = Image.new(
-                    "RGB", (16, 16), (150, 150, 150))
+                self.__album_art__ = ALBUM_PLACEHOLDER
                 a_url = next(image['url'] for image in self.__data__[
                     'item']['album']['images'] if image['width'] == 64)
                 l.DEBUG(a_url)
@@ -180,10 +185,11 @@ class SpotifyApp(App):
 
             draw = ImageDraw.Draw(self.__canvas__)
             progress_as_pixel = int(
-                self.__data__['progress_ms'] / self.__data__['item']['duration_ms'] * 58)
-            draw.rectangle((5, self.__top_padding__ + 21, 62,
-                           self.__top_padding__ + 21), fill=self.__DARK_GRAY__)
-            draw.rectangle((5, self.__top_padding__ + 21, 5 + progress_as_pixel, self.__top_padding__ + 21),
+                self.__data__['progress_ms'] / self.__data__['item']['duration_ms'] * 57)
+            progress_bar_y = self.__top_padding__ + 21
+            draw.rectangle((5, progress_bar_y, 62,
+                           progress_bar_y), fill=self.__DARK_GRAY__)
+            draw.rectangle((5, progress_bar_y, 5 + progress_as_pixel, progress_bar_y),
                            fill=highlight_color)
             draw.rectangle((5 + progress_as_pixel, self.__top_padding__ + 20, 5 +
                            progress_as_pixel, self.__top_padding__ + 22), fill=highlight_color)

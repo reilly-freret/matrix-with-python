@@ -1,4 +1,5 @@
 from utils.timer import setInterval
+from utils.logger import Logger as l
 from requests import get
 from PIL import ImageFont, ImageDraw
 from simplejson import JSONDecodeError
@@ -18,6 +19,7 @@ class App:
         self.__is_shown__ = False
 
     def __data_update__(self):
+        l.DEBUG(f"starting __data_update__ on {self.__class__.__name__}")
         res = get(self.__api_url__, headers=self.__api_headers__)
         try:
             # will except if there's nothing currently playing

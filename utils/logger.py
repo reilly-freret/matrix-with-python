@@ -13,8 +13,6 @@ class LogLevels(Enum):
     ERROR = 10
     SILENT = 0
 
-
-# ./.env
 load_dotenv()
 LOG_LEVEL = getenv('LOG_LEVEL', 'SILENT')
 
@@ -26,6 +24,11 @@ def __get_caller__():
 
 
 class Logger:
+
+    def update_level(level):
+        global LOG_LEVEL
+        LOG_LEVEL = level
+
     def FULL(msg):
         if LogLevels[LOG_LEVEL].value >= LogLevels.FULL.value:
             t = datetime.now().isoformat()
