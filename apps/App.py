@@ -20,6 +20,7 @@ class App:
     def __data_update__(self):
         res = get(self.__api_url__, headers=self.__api_headers__)
         try:
+            # will except if there's nothing currently playing
             self.__data__ = res.json()
         except JSONDecodeError:
             # append to existing data; don't overwrite it

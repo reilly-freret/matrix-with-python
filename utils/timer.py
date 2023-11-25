@@ -1,5 +1,7 @@
 import time
 import threading
+from utils.logger import Logger as l
+import traceback
 
 StartTime = time.time()
 
@@ -16,7 +18,11 @@ class setInterval:
         nextTime = time.time()+self.interval
         while not self.stopEvent.wait(nextTime-time.time()):
             nextTime += self.interval
-            self.action()
+            try:
+                self.action()
+            except Exception as e:
+                l.ERROR(e)
+                traceback.print_exc()
 
     def cancel(self):
         self.stopEvent.set()
