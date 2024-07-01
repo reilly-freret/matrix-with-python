@@ -1,4 +1,4 @@
-from apps import WeatherApp, SubwayApp, SpotifyApp
+from apps import WeatherApp, SubwayApp, SpotifyApp, DrawingApp, GifApp, MessageApp
 from apps.App import App
 from time import sleep
 from PIL import Image, ImageDraw, ImageFont
@@ -6,10 +6,12 @@ from dotenv import load_dotenv
 from os import getenv
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from utils.timer import setInterval
-from signal import pause
-from utils.logger import Logger as l
+from utils.logging import get_logger
 import sshkeyboard
 import argparse
+from signal import pause
+
+logger = get_logger(__name__)
 
 load_dotenv()
 PAGE_TIME_S = 5
@@ -24,7 +26,7 @@ class MAIN_MATRIX:
         self.options.gpio_slowdown = int(getenv('GPIO_SLOWDOWN', '4'))
         self.options.brightness = int(getenv('MAX_BRIGHTNESS', '80'))
         self.options.drop_privileges = False
-        self.options.pixel_mapper_config = 'Rotate:180'
+        self.options.pixel_mapper_config = f'Rotate:{getenv("ROTATION")}'
         self.matrix = RGBMatrix(options=self.options)
 
         self.MAIN_IMAGE = Image.new("RGB", (64, 32), (0,0,0))
@@ -76,7 +78,7 @@ def next_app():
     global shown_app_index
     next_app_index = (shown_app_index + 1) % len(app_list)
 
-    l.DEBUG(f"{app_list[shown_app_index].__class__.__name__} -> {app_list[next_app_index].__class__.__name__}")
+    logger.debug(f"page transition: {app_list[shown_app_index].__class__.__name__} -> {app_list[next_app_index].__class__.__name__}")
     
     app_list[shown_app_index].hide()
     app_list[next_app_index].show()
@@ -89,7 +91,7 @@ def prev_app():
     global shown_app_index
     next_app_index = (shown_app_index - 1) % len(app_list)
 
-    l.DEBUG(f"{app_list[shown_app_index].__class__.__name__} -> {app_list[next_app_index].__class__.__name__}")
+    logger.debug(f"page transition: {app_list[shown_app_index].__class__.__name__} -> {app_list[next_app_index].__class__.__name__}")
     
     app_list[shown_app_index].hide()
     app_list[next_app_index].show()
@@ -97,24 +99,12 @@ def prev_app():
     shown_app_index = next_app_index
 
 
-def press(key):
-    l.FULL(f"'{key}' pressed")
-    if key == 'right':
-        next_app()
-    elif key == 'left':
-        prev_app()
-
-
-def release(key):
-    l.FULL(f"'{key}' released")
-
-
 if __name__ == "__main__":
     # args = sys.argv[1:]
     parser = argparse.ArgumentParser(
         description='Display some info on an RGB matrix.')
     parser.add_argument('-a', '--apps', nargs='+', default=[
-                        'weather', 'spotify', 'subway'], help='List of app names to run (weather|spotify|subway)')
+                        'weather', 'spotify', 'subway', 'drawing', 'gif'], help='List of app names to run (weather|spotify|subway|drawing)')
     parser.add_argument('-i', '--interactive',
                         action='store_true', help='Enable keyboard interaction')
     parser.add_argument('-d', '--delay', default=PAGE_TIME_S,
@@ -122,14 +112,14 @@ if __name__ == "__main__":
     parser.add_argument('-l', '--log_level', default=getenv('LOG_LEVEL'), help='Log level (SILENT|ERROR|WARN|INFO|DEBUG|FULL)', type=str)
     args = parser.parse_args()
 
-    l.update_level(args.log_level.upper())
+    # l.update_level(args.log_level.upper())
 
     # initialize matrix
     m = MAIN_MATRIX()
     # push image to led board frame_rate times per second
     i = setInterval(1 / m.FRAME_RATE, m.push_canvas)
 
-    l.INFO(f"initializing display with args {args}")
+    logger.info(f"initializing display with args {args}")
 
     m.start_loading()
 
@@ -139,11 +129,38 @@ if __name__ == "__main__":
         app_list.append(SpotifyApp(m.set_canvas, data_refresh_rate=2))
     if "subway" in args.apps:
         app_list.append(SubwayApp(m.set_canvas))
+    if "drawing" in args.apps:
+        app_list.append(DrawingApp(m.set_canvas))
+    if "gif" in args.apps:
+        app_list.append(GifApp(m.set_canvas))
+    if "message" in args.apps:
+        app_list.append(MessageApp(m.set_canvas))
+    
+
+    if len(app_list) == 0:
+        i.cancel()
+        m.stop_loading()
+        raise Exception(f"no apps matched {app_list}")
+
+    def press(key):
+        logger.debug(f"'{key}' pressed")
+        if key == 'right':
+            next_app()
+        elif key == 'left':
+            prev_app()
+        elif key == 'up':
+            app_list[shown_app_index].dec_page()
+        elif key == 'down':
+            app_list[shown_app_index].inc_page()
+
+
+    def release(key):
+        logger.debug(f"'{key}' released")
 
     m.stop_loading()
 
-    l.INFO("initialized; starting display with:")
-    l.INFO(", ".join(map(lambda app: app.__class__.__name__, app_list)))
+    logger.info("initialized; starting display with:")
+    logger.info(", ".join(map(lambda app: app.__class__.__name__, app_list)))
 
     try:
         for app in app_list:
@@ -152,27 +169,33 @@ if __name__ == "__main__":
         shown_app_index = 0
 
         # just one app; don't cycle through
-        if len(app_list) == 1:
-            app_list[0].show()
-            pause()
+        # if len(app_list) == 1:
+        #     app_list[0].show()
+        #     pause()
         # multiple apps; cycle through
-        else:
+        # else:
             # show the first app
-            app_list[0].show()
-            if args.interactive:
-                sshkeyboard.listen_keyboard(
-                    on_press=press,
-                    on_release=release
-                )
+        app_list[0].show()
+        if args.interactive:
+            logger.info("starting interactive mode...")
+            sshkeyboard.listen_keyboard(
+                on_press=press,
+                on_release=release
+            )
+        else:
+            if len(app_list) == 1:
+                logger.info("starting non-interactive single-app...")
+                pause()
             else:
+                logger.info("starting non-interactive multiple-app...")
                 while True:
                     sleep(args.delay)
                     next_app()
 
     except KeyboardInterrupt as e:
-        l.INFO("")
-        l.INFO("exiting...")
-        l.INFO("\n")
+        logger.info("")
+        logger.info("exiting...")
+        logger.info("\n")
         for app in app_list:
             app.stop()
         i.cancel()

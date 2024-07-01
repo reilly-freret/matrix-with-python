@@ -1,7 +1,9 @@
 import time
 import threading
-from utils.logger import Logger as l
+from utils.logging import get_logger
 import traceback
+
+logger = get_logger(__name__)
 
 
 class setInterval:
@@ -19,7 +21,7 @@ class setInterval:
             try:
                 self.action()
             except Exception as e:
-                l.ERROR(e)
+                logger.error(e)
                 traceback.print_exc()
 
     def cancel(self):

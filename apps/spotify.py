@@ -7,7 +7,8 @@ from utils.scroller import Scroller
 from utils.color import ColorThiefFromImage
 import colorsys
 from utils.timer import setInterval
-from utils.logger import Logger as l
+from utils.logging import get_logger
+logger = get_logger(__name__)
 
 ALBUM_PLACEHOLDER = Image.new("RGB", (16, 16), (150, 150, 150))
 d = ImageDraw.Draw(ALBUM_PLACEHOLDER)
@@ -38,7 +39,7 @@ class SpotifyApp(App):
             else:
                 return True
         except Exception:
-            l.ERROR("unknown failure in spotify init")
+            logger.error("unknown failure in spotify init")
             raise Exception("CRITIAL FAILURE")
 
     def __get_new_access_token__(self) -> str:
@@ -59,15 +60,15 @@ class SpotifyApp(App):
             headers=headers,
             data=form_data
         )
-        l.DEBUG(access_response.json())
+        logger.debug(access_response.json())
         access_token = access_response.json()['access_token']
-        l.INFO(f"got new access_token: {access_token}")
+        logger.info(f"got new access_token: {access_token}")
         return access_token
 
     def __set_new_access_token_inplace__(self):
-        l.INFO("refreshing access token")
+        logger.info("refreshing access token")
         access_token = self.__get_new_access_token__()
-        l.INFO(f"new token: {access_token}")
+        logger.info(f"new token: {access_token}")
         self.__api_headers__ = {
             'Authorization': f"Bearer {access_token}"
         }
@@ -82,13 +83,13 @@ class SpotifyApp(App):
             # need to get a new access token, probably
             access_token = self.__get_new_access_token__()
         else:
-            l.INFO(f"testing env access token")
-            l.DEBUG(f"token to test: {access_token}")
+            logger.info(f"testing env access token")
+            logger.info(f"token to test: {access_token}")
             if not self.__test_access_tokan__(access_token):
-                l.WARNING("access token too old; getting new one")
+                logger.warn("access token too old; getting new one")
                 access_token = self.__get_new_access_token__()
             else:
-                l.INFO("env token valid")
+                logger.info("env token valid")
 
         # got access token, instantiate class
         self.__api_headers__ = {
@@ -138,7 +139,7 @@ class SpotifyApp(App):
                 self.__album_art__ = ALBUM_PLACEHOLDER
                 a_url = next(image['url'] for image in self.__data__[
                     'item']['album']['images'] if image['width'] == 64)
-                l.DEBUG(a_url)
+                logger.debug(a_url)
                 a_response = get(a_url, stream=True)
                 cover = Image.open(a_response.raw).resize((16, 16))
                 self.__album_art__ = cover
@@ -187,11 +188,11 @@ class SpotifyApp(App):
             progress_as_pixel = int(
                 self.__data__['progress_ms'] / self.__data__['item']['duration_ms'] * 57)
             progress_bar_y = self.__top_padding__ + 21
-            draw.rectangle((5, progress_bar_y, 62,
+            draw.rectangle((6, progress_bar_y, 62,
                            progress_bar_y), fill=self.__DARK_GRAY__)
-            draw.rectangle((5, progress_bar_y, 5 + progress_as_pixel, progress_bar_y),
+            draw.rectangle((6, progress_bar_y, 6 + progress_as_pixel, progress_bar_y),
                            fill=highlight_color)
-            draw.rectangle((5 + progress_as_pixel, self.__top_padding__ + 20, 5 +
+            draw.rectangle((6 + progress_as_pixel, self.__top_padding__ + 20, 6 +
                            progress_as_pixel, self.__top_padding__ + 22), fill=highlight_color)
             self.__canvas__.paste(
                 play_or_pause, (1, self.__top_padding__ + 19))

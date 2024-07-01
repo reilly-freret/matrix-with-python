@@ -1,8 +1,11 @@
 from utils.timer import setInterval
-from utils.logger import Logger as l
-from requests import get
-from PIL import ImageFont, ImageDraw
+from utils.logging import get_logger
+from requests import get, exceptions
+from PIL import ImageFont, ImageDraw, Image
 from simplejson import JSONDecodeError
+import traceback
+
+logger = get_logger(__name__)
 
 
 class App:
@@ -16,15 +19,23 @@ class App:
         self.__render_interval__ = None
         self.__image_setter__ = image_setter
         self.__font__ = ImageFont.truetype('fonts/tiny.otf', size=5)
+        # self.__font__ = ImageFont.truetype('fonts/5x7-pixel-monospace.otf', size=15)
         self.__is_shown__ = False
 
     def __data_update__(self):
-        l.DEBUG(f"starting __data_update__ on {self.__class__.__name__}")
-        res = get(self.__api_url__, headers=self.__api_headers__)
+        logger.debug(f"starting __data_update__ on {self.__class__.__name__}")
         try:
-            # will except if there's nothing currently playing
+            res = get(self.__api_url__, headers=self.__api_headers__)
+            res.raise_for_status()
+            # will except if there's nothing currently playing (spotify)
             self.__data__ = res.json()
+            logger.debug(len(self.__data__))
+        except exceptions.HTTPError as e:
+            logger.error(f"HTTP error:\n{traceback.format_exc()}")
+        except exceptions.RequestException:
+            logger.error(f"REQUEST error:\n{traceback.format_exc()}")
         except JSONDecodeError:
+            # should be specific to spotify
             # append to existing data; don't overwrite it
             if self.__data__ is None:
                 self.__data__ = {
@@ -40,13 +51,23 @@ class App:
 
     def __draw_text__(self, canvas, *args, **kwargs):
         draw = ImageDraw.Draw(canvas)
+        draw.fontmode = '1'
         if 'font' in kwargs:
             draw.text(*args, **kwargs)
         else:
             draw.text(*args, font=self.__font__, **kwargs)
 
+    def __draw_text_centered__(self, canvas, text, font):
+        W, H = (64, 32)
+        draw = ImageDraw.Draw(canvas)
+        _, _, w, h = draw.textbbox((0, 0), text, font=font)
+        # draw.rectangle(((W-w)/2,(H-h)/2,w,h), fill="red")
+        draw.text((2 + (W-w)/2, (H-h)/2), text, font=font,
+                  fill=(210, 210, 210), stroke_fill='black', stroke_width=1)
+
     def __draw_text_bg__(self, canvas, bgcolor, padding=1, *args, **kwargs) -> tuple[int, int, int, int]:
         draw = ImageDraw.Draw(canvas)
+        draw.fontmode = '1'
         l, t, r, b = draw.textbbox(*args, font=self.__font__)
         adjusted_bounds = (
             l - padding,
@@ -63,9 +84,9 @@ class App:
             self.__render_update__()
 
     def start(self):
-        if self.__api_url__ is None:
-            raise ValueError(
-                f"!!! __api_url__ not set on class {self.__class__.__name__}")
+        # if self.__api_url__ is None:
+        #     raise ValueError(
+        #         f"!!! __api_url__ not set on class {self.__class__.__name__}")
         self.__data_interval__ = setInterval(
             self.__data_refresh_rate_s__, self.__data_update__)
         self.__render_interval__ = setInterval(
@@ -82,3 +103,9 @@ class App:
 
     def hide(self):
         self.__is_shown__ = False
+
+    def inc_page(self):
+        pass
+
+    def dec_page(self):
+        pass
