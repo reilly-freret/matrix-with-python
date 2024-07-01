@@ -31,8 +31,7 @@ class Scroller():
         self.__color__ = color
 
     def incr(self):
-        print(f"offset: {self.__current_offset__}")
-        # clear region on canvas
+        # clear region on subcanvas
         self.__sub_canvas__.paste(
             (0, 0, 0), (0, 0, self.__sub_canvas__.size[0], self.__sub_canvas__.size[1]))
         draw = ImageDraw.Draw(self.__sub_canvas__)

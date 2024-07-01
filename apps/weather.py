@@ -32,34 +32,29 @@ class WeatherApp(App):
         self.__temps__ = []
         #danger 
         self.__canvas__ = Image.new("RGB", (64, 32), (0, 0, 0))
-        self.__condition_scroller__ = Scroller(self.__canvas__, 1, self.__top_padding__ + 16, 44, "jkl jkl jkl jkl")
-        # self.__condition_scroller__ = Scroller(self.__canvas__, 0, 0, 10, "jkl jkl jkl jkl")
-        self.__condition_scroller__.update_color((200,200,200))
+        self.__last_condition__ = ""
+        self.__condition_scroller__ = Scroller(self.__canvas__, 1, self.__top_padding__ + 16, 42, "")
 
-    def clock1(self, canvas):
-        self.__draw_text__(canvas, (1, self.__top_padding__), datetime.now().strftime("%I:%M:%S %p").lstrip(
+    def clock1(self):
+        self.__draw_text__(self.__canvas__, (1, self.__top_padding__), datetime.now().strftime("%I:%M:%S %p").lstrip(
             '0')[:-1].lower(), font=ImageFont.truetype('fonts/tiny.otf', size=7), fill='yellow')
         self.__draw_text__(
-            canvas, (1, self.__top_padding__ + 9), f"{self.__data__['location']['name']}", fill=(180, 180, 180))
+            self.__canvas__, (1, self.__top_padding__ + 9), f"{self.__data__['location']['name']}", fill=(180, 180, 180))
         self.__draw_text__(
-            canvas, (40, self.__top_padding__ + 9), f"{self.__data__['current']['feelslike_f']}°", fill='lightBlue')
+            self.__canvas__, (40, self.__top_padding__ + 9), f"{self.__data__['current']['feelslike_f']}°", fill='lightBlue')
 
-        # condition = self.__data__['current']['condition']['text'] if len(self.__data__[
-        #                                                                  'current']['condition']['text']) < 11 else self.__data__['current']['condition']['text'][0:7] + "..."
-        
-        # condition = self.__data__['current']['condition']['text'][0:10]
-
-        # self.__draw_text__(canvas, (1, self.__top_padding__ + 16), condition)
-        # self.__condition_scroller__.update_text(self.__data__['current']['condition']['text'])
-        
-
-        self.__draw_text__(canvas, (42, self.__top_padding__ + 16), str(math.ceil(
+        self.__draw_text__(self.__canvas__, (44, self.__top_padding__ + 16), str(math.ceil(
             self.__data__['forecast']['forecastday'][0]['day']['mintemp_f'])), fill=(180, 180, 180))
-        self.__draw_text__(canvas, (52, self.__top_padding__ + 16), str(math.ceil(
+        self.__draw_text__(self.__canvas__, (52, self.__top_padding__ + 16), str(math.ceil(
             self.__data__['forecast']['forecastday'][0]['day']['maxtemp_f'])), fill=(255, 165, 0))
+        
+        if self.__data__['current']['condition']['text'] != self.__last_condition__:
+            self.__condition_scroller__.update_text(self.__data__['current']['condition']['text'])
+            self.__last_condition__ = self.__data__['current']['condition']['text']
+        self.__condition_scroller__.incr()
 
         # graphs
-        draw = ImageDraw.Draw(canvas)
+        draw = ImageDraw.Draw(self.__canvas__)
         for index in range(0, len(self.__precip__)):
             chance_of_rain = self.__precip__[index]
             temp = self.__temps__[index]
@@ -78,10 +73,9 @@ class WeatherApp(App):
             f1 = (173, 216, 230) if y_temp_offset < 2 else (255, 165, 0)
             draw.line([(start_x, y_temp), (end_x, y_temp)], fill=f1)
 
-        self.__draw_text__(canvas, (58, 25), "%")
+        self.__draw_text__(self.__canvas__, (58, 25), "%")
 
         # self.__condition_scroller__.update_text("asdf asdf asdf asdf")
-        self.__condition_scroller__.incr()
 
 
     def clock2(self, canvas):
@@ -117,13 +111,15 @@ class WeatherApp(App):
             draw.rectangle([(x, y), (x + 1, y + 1)], fill=color)
 
     def __render_update__(self):
-        self.__canvas__ = Image.new("RGB", (64, 32), (0, 0, 0))
+        # self.__canvas__ = Image.new("RGB", (64, 32), (0, 0, 0))
+        self.__canvas__.paste((0,0,0), (0, 0, self.__canvas__.size[0], self.__canvas__.size[1]))
         if self.__data__ is None:
             self.__draw_text__(self.__canvas__, (1, self.__top_padding__), "loading")
             self.__draw_text__(
                 self.__canvas__, (1, self.__top_padding__ + 7), "weather...")
         else:
-            self.__faces__[self.__current_face__](canvas=self.__canvas__)
+            # self.__faces__[self.__current_face__](canvas=self.__canvas__)
+            self.__faces__[self.__current_face__]()
 
         self.__image_setter__(self.__canvas__)
 
