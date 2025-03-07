@@ -19,8 +19,8 @@ class SubwayApp(App):
             x_offset = 3
             y_offset = 2
             row_height = 11
-            for index, train in enumerate(self.__data__['data'][0]['S'][:3]):
-                arrival_time = mins_in_future(train['time'])
+            for index, train in enumerate(self.__data__["data"][0]["S"][:3]):
+                arrival_time = mins_in_future(train["time"])
                 arrival_string = ""
                 if arrival_time < 1.5:
                     arrival_string = "now"
@@ -28,14 +28,20 @@ class SubwayApp(App):
                     arrival_string = f"{arrival_time:.0f}m"
 
                 box = self.__draw_text_bg__(
-                    canvas, "green", 2, (x_offset, y_offset + index * row_height), train['route'])
+                    canvas,
+                    "green",
+                    2,
+                    (x_offset, y_offset + index * row_height),
+                    train["route"],
+                )
                 self.__draw_text__(
-                    canvas, (box[2] + 3, y_offset + index * row_height), arrival_string)
+                    canvas, (box[2] + 3, y_offset + index * row_height), arrival_string
+                )
 
             # southbound Q
             x_offset = 28
-            for index, train in enumerate(self.__data__['data'][1]['S'][:3]):
-                arrival_time = mins_in_future(train['time'])
+            for index, train in enumerate(self.__data__["data"][1]["S"][:3]):
+                arrival_time = mins_in_future(train["time"])
                 arrival_string = ""
                 if arrival_time < 1.5:
                     arrival_string = "now"
@@ -43,8 +49,15 @@ class SubwayApp(App):
                     arrival_string = f"{arrival_time:.0f}m"
 
                 box = self.__draw_text_bg__(
-                    canvas, "yellow", 2, (x_offset, y_offset + index * row_height), train['route'], fill="black")
+                    canvas,
+                    "yellow",
+                    2,
+                    (x_offset, y_offset + index * row_height),
+                    train["route"],
+                    fill="black",
+                )
                 self.__draw_text__(
-                    canvas, (box[2] + 3, y_offset + index * row_height), arrival_string)
+                    canvas, (box[2] + 3, y_offset + index * row_height), arrival_string
+                )
 
         self.__image_setter__(canvas)

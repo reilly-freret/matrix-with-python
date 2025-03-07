@@ -16,13 +16,18 @@ logger = get_logger("fastapi")
 
 def health():
     logger.info("/health")
-    return {
-        "status": "healthy"
-    }
+    return {"status": "healthy"}
 
 
 class HTTP_SERVER:
-    def __init__(self, next_app: Callable, prev_app: Callable, page_up: Callable, page_down: Callable, matrix_wrapper):
+    def __init__(
+        self,
+        next_app: Callable,
+        prev_app: Callable,
+        page_up: Callable,
+        page_down: Callable,
+        matrix_wrapper,
+    ):
         self.next_app = next_app
         self.prev_app = prev_app
         self.page_up = page_up
@@ -36,18 +41,14 @@ class HTTP_SERVER:
 
     def __add_routes__(self):
         self.router.add_api_route("/health", health, methods=["GET"])
+        self.router.add_api_route("/next_app", self.route_next_app, methods=["POST"])
+        self.router.add_api_route("/prev_app", self.route_prev_app, methods=["POST"])
+        self.router.add_api_route("/page_up", self.route_page_up, methods=["POST"])
+        self.router.add_api_route("/page_down", self.route_page_down, methods=["POST"])
         self.router.add_api_route(
-            "/next_app", self.route_next_app, methods=["POST"])
-        self.router.add_api_route(
-            "/prev_app", self.route_prev_app, methods=["POST"])
-        self.router.add_api_route(
-            "/page_up", self.route_page_up, methods=["POST"])
-        self.router.add_api_route(
-            "/page_down", self.route_page_down, methods=["POST"])
-        self.router.add_api_route(
-            "/set_brightness", self.route_set_brightness, methods=["POST"])
-        self.router.add_api_route(
-            "/get_state", self.route_get_state, methods=["GET"])
+            "/set_brightness", self.route_set_brightness, methods=["POST"]
+        )
+        self.router.add_api_route("/get_state", self.route_get_state, methods=["GET"])
 
     def route_set_brightness(self, request: BrightnessRequest):
         logger.info("/set_brightness")
@@ -57,9 +58,7 @@ class HTTP_SERVER:
 
     def route_get_state(self):
         logger.info("/get_state")
-        return {
-            "brightness": self.matrix_wrapper.matrix.brightness
-        }
+        return {"brightness": self.matrix_wrapper.matrix.brightness}
 
     def route_next_app(self):
         logger.info("/next_app")
@@ -82,8 +81,14 @@ class HTTP_SERVER:
         return {"error": False}
 
     def __run_api__(self):
-        uvicorn.run(self.app, host="0.0.0.0", port=8008,
-                    log_level="info", access_log=False, log_config=None)
+        uvicorn.run(
+            self.app,
+            host="0.0.0.0",
+            port=8008,
+            log_level="info",
+            access_log=False,
+            log_config=None,
+        )
 
     def start(self):
         api_thread = threading.Thread(target=self.__run_api__, daemon=True)
