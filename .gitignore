@@ -3,5 +3,5 @@ venv
 .venv
 */__pycache__
 .env
-log/*.log
+log/**/*.log
 .pid

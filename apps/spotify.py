@@ -130,7 +130,7 @@ class SpotifyApp(App):
             new_album_id = self.__data__['item']['album']['id']
         except Exception:
             pass
-        if 'item' in self.__data__ and new_album_id != self.__last_album_id__:
+        if (self.__data__ is not None) and ('item' in self.__data__) and (new_album_id != self.__last_album_id__):
             # look in the cache first
             if new_album_id in self.__album_art_cache__:
                 self.__album_art__ = self.__album_art_cache__[new_album_id]

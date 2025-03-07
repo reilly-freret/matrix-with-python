@@ -78,16 +78,16 @@ class WeatherApp(App):
         # self.__condition_scroller__.update_text("asdf asdf asdf asdf")
 
 
-    def clock2(self, canvas):
+    def clock2(self):
         d = datetime.now()
-        self.__draw_text_centered__(canvas, d.strftime("%I:%M").lstrip(
+        self.__draw_text_centered__(self.__canvas__, d.strftime("%I:%M").lstrip(
             '0'), font=ImageFont.truetype('fonts/tiny.otf', size=13))
         
-    def clock3(self, canvas):
+    def clock3(self):
     
         # Create an image with a resolution of 64x32
         img_width, img_height = 64, 30
-        draw = ImageDraw.Draw(canvas)
+        draw = ImageDraw.Draw(self.__canvas__)
         
         # Determine the scaling factors
         max_value = max(self.__temps__)
